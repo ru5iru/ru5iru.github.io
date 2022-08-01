@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Document</title>
+    <script type="text/javascript" src="script.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class = "dices">
+        <img id = "dice_1" src = "./images/dice_1.png" width="150px" >
+        <img id = "dice_2" src = "./images/dice_1.png" width="150px">
+    </div>
+    <table align="center">
+        <tbody>
+            <tr>
+                <th align="center" height="30px"> Player 1 </th>
+                <th colspan = 4 height="30px"></th>
+                <th align="center" height="30px"> Player 2 </th>
+            </tr>
+            <tr>
+                <td><img id = "player_1" src = "./images/player_1.png" width="200"></td>
+                <td><div class="rectangle" id = "a"> -- </div></td>
+                <td colspan = 2 width="40px"></div>
+                </td>
+                <td><div class="rectangle" id = "b"> -- </td>
+                <td><img id = "player_2" src = "./images/player_2.png" width="200"></td>
+            </tr>
+            <tr>
+                <td colspan = 6 align="center"><div class="rectangle_2" id = "c"> Play !!! </div></td>
+            </tr>
+        </tbody>
+    </table>
+    <button id="but_1" type="button" class="hover" onclick="roll()">Roll</button>
+    <button id="but_2" type="button" class="hover" onclick="window.location.reload();">New Game</button>
+</body>
+</html>
