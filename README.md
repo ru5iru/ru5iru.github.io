@@ -1,6 +1,7 @@
-# ru5iru.github.io
+### ru5iru.github.io
 
-###### Dice Game
+##### Dice Game
+###### CLICK HERE : https://ru5iru.github.io/dice_game/
 
 - Number of players: 02
 - Number of dices: 02
