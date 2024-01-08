@@ -2,7 +2,7 @@
 
 
 ##### Portfolio
-###### CLICK HERE : https://ru5iru.github.io/portfolio/
+###### CLICK HERE : <a>https://ru5iru.github.io/portfolio/</a>
 
 ##### Dice Game
-###### CLICK HERE : https://ru5iru.github.io/dice_game/
+###### CLICK HERE : <a>https://ru5iru.github.io/dice_game/</a>
