@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date to Unix Timestamp Converter</title>
+    <style>
+        :root {
+            /* Light mode variables (GitHub-inspired) */
+            --background: #ffffff;
+            --text: inherit;
+            --secondary-bg: #f6f8fa;
+            --border: #e1e4e8;
+            --accent: #0366d6;
+            --button-text: #ffffff;
+            --error-bg: #fff5f5;
+            --error-border: #d73a49;
+            --error-text: #d73a49;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            --result-border: #0366d6;
+            --timestamp-reverse-bg: #f6f8fa;
+        }
+
+        body.dark-mode {
+            /* Dark mode variables (GitHub-inspired) */
+            --background: #0d1117;
+            --text: #c9d1d9;
+            --secondary-bg: #161b22;
+            --border: #30363d;
+            --accent: #0366d6;
+            --button-text: #ffffff;
+            --error-bg: #2f1315;
+            --error-border: #d73a49;
+            --error-text: #d73a49;
+            --card-bg: #161b22;
+            --card-shadow: rgba(0, 0, 0, 0.3);
+            --result-border: #0366d6;
+            --timestamp-reverse-bg: #21262d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 6px;
+            padding: 24px;
+            box-shadow: 0 1px 3px var(--card-shadow);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            background: var(--accent);
+            color: var(--button-text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: #0353b3;
+            transform: translateY(-1px);
+        }
+
+        .current-time-section {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .current-time-section h2 {
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .time-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .time-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .time-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .time-value {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .timestamp-value {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .converter-section {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .converter-section h2 {
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .datetime-input, .timestamp-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+            color: var(--text);
+        }
+
+        .datetime-input:focus, .timestamp-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+        }
+
+        select.datetime-input {
+            cursor: pointer;
+        }
+
+        .time-adjustment-group {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .time-adjustment-group h3 {
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .time-inputs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .time-input-field {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-input-field label {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .time-adjustment-input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+            background: var(--card-bg);
+            transition: all 0.3s ease;
+        }
+
+        .time-adjustment-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+        }
+
+        .convert-btn {
+            background: var(--accent);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .convert-btn:hover {
+            background: #0353b3;
+            transform: translateY(-1px);
+        }
+
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+
+        .clear-btn {
+            background: #6a737d;
+            color: var(--button-text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 12px auto 0;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border-left: 4px solid var(--result-border);
+            box-shadow: 0 1px 3px var(--card-shadow);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .result-item {
+            padding: 8px;
+            background: var(--secondary-bg);
+            border-radius: 4px;
+        }
+
+        .result-item strong {
+            display: block;
+            margin-bottom: 4unile: break-word;
+            font-size: 0.85rem;
+        }
+
+        .result-value {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+            word-break: break-all;
+        }
+
+        .timestamp-reverse {
+            background: var(--timestamp-reverse-bg);
+        }
+
+        @media (max-width: 600px) {
+            .time-display, .result-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-inputs-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            border-left: 4px solid var(--error-border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕒 Date ↔ Unix Timestamp Converter</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
+        </div>
+        
+        <!-- Current Time Display -->
+        <div class="current-time-section">
+            <h2>Current Time</h2>
+            <div class="time-display">
+                <div class="time-card">
+                    <h3>UTC Time</h3>
+                    <div id="utc-time" class="time-value">--:--:--</div>
+                    <div id="utc-timestamp" class="timestamp-value">----------</div>
+                </div>
+                <div class="time-card">
+                    <h3>Your Local Time</h3>
+                    <div id="local-time" class="time-value">--:--:--</div>
+                    <div id="local-timestamp" class="timestamp-value">----------</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date to Timestamp Converter -->
+        <div class="converter-section">
+            <h2>📅 Date & Time → Unix Timestamp</h2>
+            <div class="input-group">
+                <label for="date-input">Select Date:</label>
+                <input type="date" id="date-input" class="datetime-input">
+            </div>
+            <div class="input-group">
+                <label for="time-input">Select Time (24-hour format):</label>
+                <input type="time" id="time-input" class="datetime-input" step="1">
+            </div>
+
+            <!-- Time Adjustment Section -->
+            <div class="time-adjustment-group">
+                <h3>➕ Add Additional Time (Optional)</h3>
+                <div class="time-inputs-container">
+                    <div class="time-input-field">
+                        <label for="add-hours">Hours</label>
+                        <input type="number" id="add-hours" class="time-adjustment-input" value="0" min="0" max="23">
+                    </div>
+                    <div class="time-input-field">
+                        <label for="add-minutes">Minutes</label>
+                        <input type="number" id="add-minutes" class="time-adjustment-input" value="0" min="0" max="59">
+                    </div>
+                    <div class="time-input-field">
+                        <label for="add-seconds">Seconds</label>
+                        <input type="number" id="add-seconds" class="time-adjustment-input" value="0" min="0" max="59">
+                    </div>
+                </div>
+                <button onclick="clearTimeAdjustment()" class="clear-btn">Clear Additional Time</button>
+            </div>
+
+            <button onclick="convertToTimestamp()" class="convert-btn">Convert to Timestamp</button>
+            <div id="timestamp-result"></div>
+        </div>
+
+        <!-- Timestamp to Date Converter -->
+        <div class="converter-section timestamp-reverse">
+            <h2>🔢 Unix Timestamp → Date & Time</h2>
+            <div class="input-group">
+                <label for="timestamp-input">Enter Unix Timestamp:</label>
+                <input type="number" id="timestamp-input" class="timestamp-input" placeholder="e.g., 1690876800" onkeypress="handleTimestampEnter(event)">
+            </div>
+            <div id="date-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const toggleButton = document.querySelector('.theme-toggle');
+            const isDark = !body.classList.contains('dark-mode');
+            toggleButton.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // Load theme from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const toggleButton = document.querySelector('.theme-toggle');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                toggleButton.textContent = '☀️ Light';
+            } else {
+                toggleButton.textContent = '🌙 Dark';
+            }
+        });
+
+        // Update current time display
+        function updateCurrentTime() {
+            const now = new Date();
+            const utcTime = new Date(now.getTime());
+            const localTime = now;
+            
+            // Format time in 24-hour format
+            const utcTimeString = formatDateTime(utcTime, true);
+            const localTimeString = formatDateTime(localTime);
+            
+            // Get timestamps
+            const timestamp = Math.floor(now.getTime() / 1000);
+            
+            // Get user's timezone info for display
+            const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const timezoneOffset = now.getTimezoneOffset();
+            const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
+            const offsetMinutes = Math.abs(timezoneOffset) % 60;
+            const offsetSign = timezoneOffset <= 0 ? '+' : '-';
+            const offsetString = `GMT${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
+            
+            // Update display
+            document.getElementById('utc-time').textContent = utcTimeString;
+            document.getElementById('local-time').textContent = localTimeString;
+            document.getElementById('utc-timestamp').textContent = timestamp;
+            document.getElementById('local-timestamp').textContent = timestamp;
+            
+            // Update the timezone info in the header (only once)
+            const localCard = document.querySelector('.time-card:last-child h3');
+            if (localCard && !localCard.textContent.includes('(')) {
+                localCard.textContent = `Your Local Time (${offsetString})`;
+            }
+        }
+
+        // Clear additional time inputs
+        function clearTimeAdjustment() {
+            document.getElementById('add-hours').value = '0';
+            document.getElementById('add-minutes').value = '0';
+            document.getElementById('add-seconds').value = '0';
+        }
+
+        // Convert date/time to timestamp
+        function convertToTimestamp() {
+            const dateInput = document.getElementById('date-input');
+            const timeInput = document.getElementById('time-input');
+            const addHours = parseInt(document.getElementById('add-hours').value) || 0;
+            const addMinutes = parseInt(document.getElementById('add-minutes').value) || 0;
+            const addSeconds = parseInt(document.getElementById('add-seconds').value) || 0;
+            const resultDiv = document.getElementById('timestamp-result');
+            
+            if (!dateInput.value) {
+                resultDiv.innerHTML = '<div class="error">Please select a date.</div>';
+                return;
+            }
+            
+            if (!timeInput.value) {
+                resultDiv.innerHTML = '<div class="error">Please select a time.</div>';
+                return;
+            }
+            
+            try {
+                // Combine date and time - treating input as local time
+                const dateTimeString = `${dateInput.value}T${timeInput.value}`;
+                const selectedDate = new Date(dateTimeString);
+                
+                // Add the additional time
+                selectedDate.setHours(selectedDate.getHours() + addHours);
+                selectedDate.setMinutes(selectedDate.getMinutes() + addMinutes);
+                selectedDate.setSeconds(selectedDate.getSeconds() + addSeconds);
+                
+                const timestamp = Math.floor(selectedDate.getTime() / 1000);
+                
+                // Create display versions
+                const utcString = formatDateTime(selectedDate, true); // Format as UTC
+                const localString = formatDateTime(selectedDate); // Format as local time
+                
+                // Get user's timezone info
+                const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timezoneOffset = selectedDate.getTimezoneOffset();
+                const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
+                const offsetMinutes = Math.abs(timezoneOffset) % 60;
+                const offsetSign = timezoneOffset <= 0 ? '+' : '-';
+                const offsetString = `GMT${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
+                
+                // Show additional time info if any was added
+                const additionalTimeInfo = (addHours > 0 || addMinutes > 0 || addSeconds > 0) ? 
+                    `<div class="result-item">
+                        <strong>Additional Time Added:</strong>
+                        <div class="result-value">+${addHours}h ${addMinutes}m ${addSeconds}s</div>
+                    </div>` : '';
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h3>Conversion Result</h3>
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <strong>Unix Timestamp:</strong>
+                                <div class="result-value">${timestamp}</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>Your Timezone:</strong>
+                                <div class="result-value">${timezoneName} (${offsetString})</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>UTC Date/Time:</strong>
+                                <div class="result-value">${utcString}</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>Your Local Time:</strong>
+                                <div class="result-value">${localString}</div>
+                            </div>
+                            ${additionalTimeInfo}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">Invalid date/time format.</div>';
+            }
+        }
+
+        // Handle Enter key for timestamp input
+        function handleTimestampEnter(event) {
+            if (event.key === 'Enter') {
+                convertToDate();
+            }
+        }
+
+        // Convert timestamp to date
+        function convertToDate() {
+            const timestampInput = document.getElementById('timestamp-input');
+            const resultDiv = document.getElementById('date-result');
+            
+            const timestamp = parseInt(timestampInput.value);
+            
+            if (!timestamp || timestamp < 0) {
+                resultDiv.innerHTML = '<div class="error">Please enter a valid Unix timestamp.</div>';
+                return;
+            }
+            
+            try {
+                const utcDate = new Date(timestamp * 1000);
+                
+                // Create local date (user's timezone)
+                const localDate = new Date(timestamp * 1000);
+                
+                const utcString = formatDateTime(utcDate, true); // true for UTC formatting
+                const localString = formatDateTime(localDate);
+                
+                // Get user's timezone info
+                const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timezoneOffset = localDate.getTimezoneOffset();
+                const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
+                const offsetMinutes = Math.abs(timezoneOffset) % 60;
+                const offsetSign = timezoneOffset <= 0 ? '+' : '-';
+                const offsetString = `GMT${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h3>Conversion Result</h3>
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <strong>UTC Date/Time:</strong>
+                                <div class="result-value">${utcString}</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>Your Local Time:</strong>
+                                <div class="result-value">${localString}</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>Input Timestamp:</strong>
+                                <div class="result-value">${timestamp}</div>
+                            </div>
+                            <div class="result-item">
+                                <strong>Your Timezone:</strong>
+                                <div class="result-value">${timezoneName} (${offsetString})</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">Invalid timestamp. Please enter a valid Unix timestamp.</div>';
+            }
+        }
+
+        // Format date/time in 24-hour format
+        function formatDateTime(date, isUTC = false) {
+            if (isUTC) {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+                
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            } else {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Auto-trigger timestamp conversion when Enter is pressed
+        document.getElementById('timestamp-input').addEventListener('input', function() {
+            if (this.value) {
+                convertToDate();
+            } else {
+                document.getElementById('date-result').innerHTML = '';
+            }
+        });
+
+        // Initialize current time display and update every second
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+
+        // Set current date and time in inputs by default
+        const now = new Date();
+        const currentDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+        const currentTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+        
+        document.getElementById('date-input').value = currentDate;
+        document.getElementById('time-input').value = currentTime;
+    </script>
+</body>
+</html>
