@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Enhanced Dynamic Table Renderer</title>
+		<title>Spreadsheet Table Renderer</title>
 		<style>
 			* {
 				box-sizing: border-box;
@@ -11,322 +11,349 @@
 				padding: 0;
 			}
 
+			:root {
+				--bg-primary: #ffffff;
+				--bg-secondary: #f8f9fa;
+				--border-color: #e1e5e9;
+				--text-primary: #333333;
+				--text-secondary: #666666;
+				--header-bg: #f1f3f5;
+				--hover-bg: #f8f9fa;
+				--accent: #0066cc;
+			}
+
+			[data-theme="dark"] {
+				--bg-primary: #1a1d23;
+				--bg-secondary: #242831;
+				--border-color: #3d4047;
+				--text-primary: #e1e5e9;
+				--text-secondary: #a0a4a8;
+				--header-bg: #2d3139;
+				--hover-bg: #323741;
+				--accent: #4a9eff;
+			}
+
 			body {
-				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				min-height: 100vh;
-				padding: 20px;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				background: var(--bg-secondary);
+				color: var(--text-primary);
+				font-size: 13px;
+				line-height: 1.4;
 			}
 
 			.container {
-				max-width: 1200px;
-				margin: 0 auto;
-				background: rgba(255, 255, 255, 0.95);
-				backdrop-filter: blur(10px);
-				border-radius: 20px;
-				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-				padding: 30px;
+				max-width: 100vw;
+				margin: 0;
+				background: var(--bg-primary);
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
 			}
 
-			h1 {
-				color: #333;
-				text-align: center;
-				margin-bottom: 30px;
-				font-weight: 700;
-				font-size: 2.5em;
-				background: linear-gradient(135deg, #667eea, #764ba2);
-				-webkit-background-clip: text;
-				-webkit-text-fill-color: transparent;
-				background-clip: text;
+			.header {
+				padding: 15px 20px;
+				background: var(--bg-primary);
+				border-bottom: 1px solid var(--border-color);
+				flex-shrink: 0;
+			}
+
+			.title {
+				font-size: 18px;
+				font-weight: 600;
+				color: var(--text-primary);
+				margin-bottom: 15px;
 			}
 
 			.input-section {
-				margin-bottom: 30px;
+				display: flex;
+				gap: 10px;
+				align-items: flex-end;
+				flex-wrap: wrap;
+			}
+
+			.input-group {
+				flex: 1;
+				min-width: 300px;
 			}
 
 			.input-label {
 				display: block;
-				margin-bottom: 10px;
-				font-weight: 600;
-				color: #333;
-				font-size: 1.1em;
+				margin-bottom: 5px;
+				font-weight: 500;
+				color: var(--text-secondary);
+				font-size: 12px;
 			}
 
 			textarea {
 				width: 100%;
-				height: 180px;
-				padding: 15px;
-				border: 2px solid #e1e5e9;
-				border-radius: 12px;
-				font-family: "Consolas", "Monaco", "Courier New", monospace;
-				font-size: 14px;
-				line-height: 1.5;
+				height: 80px;
+				padding: 8px 12px;
+				border: 1px solid var(--border-color);
+				border-radius: 4px;
+				font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace;
+				font-size: 12px;
+				background: var(--bg-primary);
+				color: var(--text-primary);
 				resize: vertical;
-				transition: all 0.3s ease;
-				background: #fafbfc;
+				transition: border-color 0.2s ease;
 			}
 
 			textarea:focus {
 				outline: none;
-				border-color: #667eea;
-				box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-				background: #fff;
+				border-color: var(--accent);
 			}
 
 			.controls {
 				display: flex;
-				gap: 15px;
-				flex-wrap: wrap;
-				align-items: center;
-				margin-top: 15px;
+				gap: 8px;
+				align-items: flex-end;
 			}
 
 			button {
-				padding: 12px 24px;
-				border: none;
-				border-radius: 8px;
-				font-weight: 600;
-				font-size: 14px;
+				padding: 8px 16px;
+				border: 1px solid var(--border-color);
+				border-radius: 4px;
+				font-size: 12px;
 				cursor: pointer;
-				transition: all 0.3s ease;
+				transition: all 0.2s ease;
+				background: var(--bg-primary);
+				color: var(--text-primary);
+				font-weight: 500;
+				height: 32px;
+				display: flex;
+				align-items: center;
+				gap: 6px;
+			}
+
+			.btn-primary {
+				background: var(--accent);
+				color: white;
+				border-color: var(--accent);
+			}
+
+			button:hover {
+				background: var(--hover-bg);
+			}
+
+			.btn-primary:hover {
+				background: var(--accent);
+				opacity: 0.9;
+			}
+
+			.theme-toggle {
+				margin-left: auto;
+			}
+
+			.main-content {
+				flex: 1;
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.message-container {
+				padding: 0 20px;
+				margin-top: 10px;
+			}
+
+			.table-container {
+				flex: 1;
+				overflow: auto;
+				margin: 10px 20px 20px;
+				border: 1px solid var(--border-color);
+				border-radius: 4px;
+				background: var(--bg-primary);
+			}
+
+			.table-wrapper {
+				width: 100%;
+				height: 100%;
+				overflow: auto;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: separate;
+				border-spacing: 0;
+				font-size: 12px;
+				background: var(--bg-primary);
+			}
+
+			th,
+			td {
+				padding: 8px 12px;
+				border-right: 1px solid var(--border-color);
+				border-bottom: 1px solid var(--border-color);
+				text-align: left;
+				vertical-align: top;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				min-width: 60px;
+				max-width: 300px;
+			}
+
+			th {
+				background: var(--header-bg);
+				font-weight: 600;
+				position: sticky;
+				top: 0;
+				z-index: 10;
+				color: var(--text-primary);
+			}
+
+			td {
+				background: var(--bg-primary);
+			}
+
+			tr:hover td {
+				background: var(--hover-bg);
+			}
+
+			th:first-child,
+			td:first-child {
+				border-left: none;
+			}
+
+			th:last-child,
+			td:last-child {
+				border-right: none;
+			}
+
+			.auto-width {
+				width: auto;
+				white-space: normal;
+				word-wrap: break-word;
+			}
+
+			.expand-content th,
+			.expand-content td {
+				white-space: normal;
+				max-width: none;
+				width: auto;
+			}
+
+			.error-message,
+			.success-message {
+				padding: 8px 12px;
+				border-radius: 4px;
+				font-size: 12px;
 				display: flex;
 				align-items: center;
 				gap: 8px;
 			}
 
-			.btn-primary {
-				background: linear-gradient(135deg, #667eea, #764ba2);
-				color: white;
-				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-			}
-
-			.btn-primary:hover {
-				transform: translateY(-2px);
-				box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-			}
-
-			.btn-secondary {
-				background: #f8f9fa;
-				color: #495057;
-				border: 2px solid #e9ecef;
-			}
-
-			.btn-secondary:hover {
-				background: #e9ecef;
-				transform: translateY(-1px);
-			}
-
-			.style-controls {
-				display: flex;
-				gap: 15px;
-				align-items: center;
-				flex-wrap: wrap;
-			}
-
-			select {
-				padding: 8px 12px;
-				border: 2px solid #e1e5e9;
-				border-radius: 6px;
-				background: white;
-				font-size: 14px;
-				cursor: pointer;
-			}
-
-			.table-container {
-				margin-top: 30px;
-				border-radius: 12px;
-				overflow: hidden;
-				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-				background: white;
-			}
-
-			.table-wrapper {
-				overflow-x: auto;
-				max-height: 600px;
-				overflow-y: auto;
-			}
-
-			table {
-				width: 100%;
-				border-collapse: collapse;
-				font-size: 14px;
-			}
-
-			/* Default table style */
-			.style-default th {
-				background: linear-gradient(135deg, #667eea, #764ba2);
-				color: white;
-				font-weight: 600;
-				padding: 12px 15px;
-				text-align: left;
-				border: none;
-			}
-
-			.style-default td {
-				padding: 12px 15px;
-				border-bottom: 1px solid #e9ecef;
-				transition: background-color 0.2s ease;
-			}
-
-			.style-default tr:nth-child(even) td {
-				background-color: #f8f9fa;
-			}
-
-			.style-default tr:hover td {
-				background-color: #e3f2fd;
-			}
-
-			/* Minimal table style */
-			.style-minimal th {
-				background: #f8f9fa;
-				color: #333;
-				font-weight: 600;
-				padding: 10px 15px;
-				text-align: left;
-				border-bottom: 2px solid #dee2e6;
-			}
-
-			.style-minimal td {
-				padding: 10px 15px;
-				border: none;
-				border-bottom: 1px solid #f1f3f4;
-			}
-
-			.style-minimal tr:hover td {
-				background-color: #f8f9fa;
-			}
-
-			/* Dark table style */
-			.style-dark {
-				background: #2d3748;
-				color: white;
-			}
-
-			.style-dark th {
-				background: #1a202c;
-				color: #e2e8f0;
-				font-weight: 600;
-				padding: 12px 15px;
-				text-align: left;
-				border-bottom: 2px solid #4a5568;
-			}
-
-			.style-dark td {
-				padding: 12px 15px;
-				border-bottom: 1px solid #4a5568;
-			}
-
-			.style-dark tr:nth-child(even) td {
-				background-color: #374151;
-			}
-
-			.style-dark tr:hover td {
-				background-color: #4a5568;
-			}
-
 			.error-message {
-				background: #fee;
+				background: #fff5f5;
 				color: #c53030;
-				padding: 15px;
-				border-radius: 8px;
-				border-left: 4px solid #f56565;
-				margin-top: 15px;
-				display: flex;
-				align-items: center;
-				gap: 10px;
+				border: 1px solid #feb2b2;
 			}
 
 			.success-message {
 				background: #f0fff4;
-				color: #22543d;
-				padding: 15px;
-				border-radius: 8px;
-				border-left: 4px solid #48bb78;
-				margin-top: 15px;
-				display: flex;
-				align-items: center;
-				gap: 10px;
+				color: #38a169;
+				border: 1px solid #9ae6b4;
+			}
+
+			[data-theme="dark"] .error-message {
+				background: #2d1b1b;
+				color: #fc8181;
+				border-color: #742a2a;
+			}
+
+			[data-theme="dark"] .success-message {
+				background: #1a2e1a;
+				color: #68d391;
+				border-color: #276749;
 			}
 
 			.stats {
 				display: flex;
-				gap: 20px;
-				margin-top: 15px;
-				flex-wrap: wrap;
-			}
-
-			.stat-item {
-				background: #f8f9fa;
-				padding: 10px 15px;
-				border-radius: 8px;
-				font-size: 14px;
-				color: #495057;
-				font-weight: 500;
+				gap: 15px;
+				margin-top: 8px;
+				font-size: 11px;
+				color: var(--text-secondary);
 			}
 
 			.hidden {
 				display: none;
 			}
 
+			.checkbox-group {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+			}
+
+			input[type="checkbox"] {
+				margin: 0;
+			}
+
 			@media (max-width: 768px) {
-				.container {
-					padding: 20px;
-				}
-
-				h1 {
-					font-size: 2em;
-				}
-
-				.controls {
+				.input-section {
 					flex-direction: column;
 					align-items: stretch;
 				}
 
+				.input-group {
+					min-width: 100%;
+				}
+
+				.controls {
+					justify-content: stretch;
+				}
+
 				button {
+					flex: 1;
 					justify-content: center;
 				}
 			}
 		</style>
 	</head>
-	<body>
+	<body data-theme="light">
 		<div class="container">
-			<h1>✨ Dynamic Table Renderer</h1>
+			<div class="header">
+				<div class="title">📊 Table Renderer</div>
 
-			<div class="input-section">
-				<label class="input-label" for="tableInput"> 📋 Paste your HTML table code: </label>
-				<textarea
-					id="tableInput"
-					placeholder="Paste your HTML table here...&#10;&#10;Example:&#10;<table>&#10;  <tr>&#10;    <th>Name</th>&#10;    <th>Age</th>&#10;  </tr>&#10;  <tr>&#10;    <td>John</td>&#10;    <td>30</td>&#10;  </tr>&#10;</table>"
-				></textarea>
+				<div class="input-section">
+					<div class="input-group">
+						<label class="input-label" for="tableInput"> HTML Table Code </label>
+						<textarea
+							id="tableInput"
+							placeholder="<table><tr><th>Name</th><th>Age</th></tr><tr><td>John</td><td>30</td></tr></table>"
+						></textarea>
+					</div>
 
-				<div class="controls">
-					<button class="btn-primary" onclick="renderTable()">🚀 Render Table</button>
+					<div class="controls">
+						<button class="btn-primary" onclick="renderTable()">Render</button>
 
-					<button class="btn-secondary" onclick="clearInput()">🗑️ Clear</button>
+						<button onclick="clearInput()">Clear</button>
 
-					<button class="btn-secondary" onclick="copyTable()">📋 Copy HTML</button>
+						<button onclick="copyTableData()">📋 Copy Data</button>
 
-					<div class="style-controls">
-						<label for="tableStyle">Style:</label>
-						<select id="tableStyle" onchange="applyStyle()">
-							<option value="default">Modern</option>
-							<option value="minimal">Minimal</option>
-							<option value="dark">Dark</option>
-						</select>
+						<div class="checkbox-group">
+							<input type="checkbox" id="expandContent" onchange="toggleExpand()" />
+							<label for="expandContent">Expand</label>
+						</div>
+
+						<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 					</div>
 				</div>
 			</div>
 
-			<div id="messageContainer"></div>
+			<div class="main-content">
+				<div id="messageContainer" class="message-container"></div>
 
-			<div class="table-container hidden" id="tableContainer">
-				<div class="table-wrapper" id="tableOutput"></div>
-				<div class="stats" id="statsContainer"></div>
+				<div class="table-container hidden" id="tableContainer">
+					<div class="table-wrapper" id="tableOutput"></div>
+					<div class="stats" id="statsContainer"></div>
+				</div>
 			</div>
 		</div>
 
 		<script>
-			let currentTableHTML = "";
+			let currentTableData = null;
 
 			function renderTable() {
 				const input = document.getElementById("tableInput").value.trim();
@@ -334,7 +361,6 @@
 				const container = document.getElementById("tableContainer");
 				const messageContainer = document.getElementById("messageContainer");
 
-				// Clear previous messages
 				messageContainer.innerHTML = "";
 
 				if (!input) {
@@ -344,35 +370,27 @@
 				}
 
 				try {
-					// Enhanced validation
 					if (!isValidTableHTML(input)) {
-						showMessage(
-							"⚠️ Please paste valid HTML table code. Make sure it contains &lt;table&gt;, &lt;tr&gt;, and &lt;td&gt;/&lt;th&gt; tags.",
-							"error"
-						);
-						container.classList.remove("hidden");
-						output.innerHTML =
-							'<p style="padding: 20px; text-align: center; color: #666;">No valid table to display</p>';
+						showMessage("Please paste valid HTML table code.", "error");
+						container.classList.add("hidden");
 						return;
 					}
 
-					// Sanitize and render
 					const sanitizedHTML = sanitizeHTML(input);
 					output.innerHTML = sanitizedHTML;
-					currentTableHTML = sanitizedHTML;
 
-					// Apply current style
-					applyStyle();
+					// Auto-size columns based on content
+					adjustColumnWidths();
 
-					// Show success message and stats
+					// Extract table data for copying
+					extractTableData();
+
 					container.classList.remove("hidden");
-					showMessage("✅ Table rendered successfully!", "success");
+					showMessage("Table rendered successfully!", "success");
 					updateStats(output);
 				} catch (error) {
-					showMessage("❌ Error rendering table: " + error.message, "error");
-					container.classList.remove("hidden");
-					output.innerHTML =
-						'<p style="padding: 20px; text-align: center; color: #666;">Error displaying table</p>';
+					showMessage("Error rendering table: " + error.message, "error");
+					container.classList.add("hidden");
 				}
 			}
 
@@ -386,11 +404,9 @@
 			}
 
 			function sanitizeHTML(html) {
-				// Create a temporary div to parse HTML safely
 				const tempDiv = document.createElement("div");
 				tempDiv.innerHTML = html;
 
-				// Only allow table-related elements
 				const allowedTags = [
 					"table",
 					"thead",
@@ -400,12 +416,10 @@
 					"th",
 					"td",
 					"caption",
-					"colgroup",
-					"col",
 				];
-				const tables = tempDiv.querySelectorAll("*");
+				const elements = tempDiv.querySelectorAll("*");
 
-				tables.forEach((element) => {
+				elements.forEach((element) => {
 					if (!allowedTags.includes(element.tagName.toLowerCase())) {
 						element.remove();
 					}
@@ -414,62 +428,141 @@
 				return tempDiv.innerHTML;
 			}
 
-			function applyStyle() {
-				const style = document.getElementById("tableStyle").value;
-				const output = document.getElementById("tableOutput");
-				const tables = output.querySelectorAll("table");
+			function adjustColumnWidths() {
+				const tables = document.querySelectorAll("#tableOutput table");
 
 				tables.forEach((table) => {
-					// Remove existing style classes
-					table.className = table.className.replace(/style-\w+/g, "").trim();
-					// Add new style class
-					table.classList.add("style-" + style);
+					const rows = table.querySelectorAll("tr");
+					if (rows.length === 0) return;
+
+					// Get number of columns from first row
+					const firstRow = rows[0];
+					const colCount = firstRow.children.length;
+
+					// Calculate max content width for each column
+					const colWidths = new Array(colCount).fill(0);
+
+					rows.forEach((row) => {
+						Array.from(row.children).forEach((cell, index) => {
+							const content = cell.textContent.trim();
+							const width = Math.min(Math.max(content.length * 8 + 24, 80), 300);
+							colWidths[index] = Math.max(colWidths[index], width);
+						});
+					});
+
+					// Apply calculated widths
+					rows.forEach((row) => {
+						Array.from(row.children).forEach((cell, index) => {
+							cell.style.width = colWidths[index] + "px";
+							cell.style.minWidth = colWidths[index] + "px";
+						});
+					});
 				});
+			}
+
+			function extractTableData() {
+				const tables = document.querySelectorAll("#tableOutput table");
+				currentTableData = [];
+
+				tables.forEach((table) => {
+					const rows = table.querySelectorAll("tr");
+					const tableData = [];
+
+					rows.forEach((row) => {
+						const rowData = [];
+						row.querySelectorAll("th, td").forEach((cell) => {
+							rowData.push(cell.textContent.trim());
+						});
+						if (rowData.length > 0) {
+							tableData.push(rowData);
+						}
+					});
+
+					if (tableData.length > 0) {
+						currentTableData.push(tableData);
+					}
+				});
+			}
+
+			function copyTableData() {
+				if (!currentTableData || currentTableData.length === 0) {
+					showMessage("No table data to copy. Please render a table first.", "error");
+					return;
+				}
+
+				// Convert table data to tab-separated values (TSV) for spreadsheet compatibility
+				let tsvContent = "";
+
+				currentTableData.forEach((tableData, tableIndex) => {
+					if (tableIndex > 0) tsvContent += "\n\n"; // Separate multiple tables
+
+					tableData.forEach((row) => {
+						tsvContent += row.join("\t") + "\n";
+					});
+				});
+
+				navigator.clipboard
+					.writeText(tsvContent.trim())
+					.then(() => {
+						showMessage(
+							"Table data copied! You can paste it directly into spreadsheet applications.",
+							"success"
+						);
+					})
+					.catch(() => {
+						// Fallback for older browsers
+						const textArea = document.createElement("textarea");
+						textArea.value = tsvContent.trim();
+						document.body.appendChild(textArea);
+						textArea.select();
+						document.execCommand("copy");
+						document.body.removeChild(textArea);
+						showMessage("Table data copied to clipboard!", "success");
+					});
+			}
+
+			function toggleExpand() {
+				const output = document.getElementById("tableOutput");
+				const checkbox = document.getElementById("expandContent");
+
+				if (checkbox.checked) {
+					output.classList.add("expand-content");
+				} else {
+					output.classList.remove("expand-content");
+					adjustColumnWidths(); // Reapply auto-sizing
+				}
+			}
+
+			function toggleTheme() {
+				const body = document.body;
+				const button = document.querySelector(".theme-toggle");
+
+				if (body.getAttribute("data-theme") === "light") {
+					body.setAttribute("data-theme", "dark");
+					button.textContent = "☀️";
+				} else {
+					body.setAttribute("data-theme", "light");
+					button.textContent = "🌙";
+				}
 			}
 
 			function clearInput() {
 				document.getElementById("tableInput").value = "";
 				document.getElementById("tableContainer").classList.add("hidden");
 				document.getElementById("messageContainer").innerHTML = "";
-				currentTableHTML = "";
-			}
-
-			function copyTable() {
-				if (!currentTableHTML) {
-					showMessage("No table to copy. Please render a table first.", "error");
-					return;
-				}
-
-				navigator.clipboard
-					.writeText(currentTableHTML)
-					.then(() => {
-						showMessage("📋 Table HTML copied to clipboard!", "success");
-					})
-					.catch(() => {
-						// Fallback for older browsers
-						const textArea = document.createElement("textarea");
-						textArea.value = currentTableHTML;
-						document.body.appendChild(textArea);
-						textArea.select();
-						document.execCommand("copy");
-						document.body.removeChild(textArea);
-						showMessage("📋 Table HTML copied to clipboard!", "success");
-					});
+				currentTableData = null;
 			}
 
 			function showMessage(text, type) {
 				const messageContainer = document.getElementById("messageContainer");
 				const messageClass = type === "error" ? "error-message" : "success-message";
-				const icon = type === "error" ? "⚠️" : "✅";
 
 				messageContainer.innerHTML = `
         <div class="${messageClass}">
-          <span>${icon}</span>
           <span>${text}</span>
         </div>
       `;
 
-				// Auto-hide success messages after 3 seconds
 				if (type === "success") {
 					setTimeout(() => {
 						messageContainer.innerHTML = "";
@@ -497,17 +590,11 @@
 				});
 
 				statsContainer.innerHTML = `
-        <div class="stat-item">📊 ${tables.length} Table${tables.length !== 1 ? "s" : ""}</div>
-        <div class="stat-item">📝 ${totalRows} Row${totalRows !== 1 ? "s" : ""}</div>
-        <div class="stat-item">🔢 ${totalCells} Cell${totalCells !== 1 ? "s" : ""}</div>
+        <span>Tables: ${tables.length}</span>
+        <span>Rows: ${totalRows}</span>
+        <span>Cells: ${totalCells}</span>
       `;
 			}
-
-			// Remove auto-resize textarea to maintain consistent height
-			// document.getElementById('tableInput').addEventListener('input', function() {
-			//   this.style.height = 'auto';
-			//   this.style.height = Math.max(180, this.scrollHeight) + 'px';
-			// });
 
 			// Keyboard shortcuts
 			document.addEventListener("keydown", function (e) {
