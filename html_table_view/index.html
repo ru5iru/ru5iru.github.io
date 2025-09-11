@@ -503,11 +503,11 @@
       `;
 			}
 
-			// Auto-resize textarea
-			document.getElementById("tableInput").addEventListener("input", function () {
-				this.style.height = "auto";
-				this.style.height = Math.max(180, this.scrollHeight) + "px";
-			});
+			// Remove auto-resize textarea to maintain consistent height
+			// document.getElementById('tableInput').addEventListener('input', function() {
+			//   this.style.height = 'auto';
+			//   this.style.height = Math.max(180, this.scrollHeight) + 'px';
+			// });
 
 			// Keyboard shortcuts
 			document.addEventListener("keydown", function (e) {
