@@ -1,63 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Dynamic Table Renderer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    textarea {
-      width: 100%;
-      height: 150px;
-      margin-bottom: 15px;
-      font-family: monospace;
-    }
-    .table-container {
-      margin-top: 20px;
-      overflow-x: auto;
-    }
-    table {
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #444;
-      padding: 5px 10px;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-  </style>
-</head>
-<body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Enhanced Dynamic Table Renderer</title>
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
 
-  <h2>Paste your HTML Table</h2>
+			body {
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				min-height: 100vh;
+				padding: 20px;
+			}
 
-  <!-- Input field for HTML table -->
-  <textarea id="tableInput" placeholder="Paste your HTML table here..."></textarea>
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background: rgba(255, 255, 255, 0.95);
+				backdrop-filter: blur(10px);
+				border-radius: 20px;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+				padding: 30px;
+			}
 
-  <!-- Button to render -->
-  <button onclick="renderTable()">Render Table</button>
+			h1 {
+				color: #333;
+				text-align: center;
+				margin-bottom: 30px;
+				font-weight: 700;
+				font-size: 2.5em;
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+			}
 
-  <!-- Table display -->
-  <div class="table-container" id="tableOutput"></div>
+			.input-section {
+				margin-bottom: 30px;
+			}
 
-  <script>
-    function renderTable() {
-      const input = document.getElementById('tableInput').value;
-      const output = document.getElementById('tableOutput');
+			.input-label {
+				display: block;
+				margin-bottom: 10px;
+				font-weight: 600;
+				color: #333;
+				font-size: 1.1em;
+			}
 
-      // Simple safety check: only allow <table> content
-      if (input.toLowerCase().includes("<table")) {
-        output.innerHTML = input;
-      } else {
-        output.innerHTML = "<p style='color:red;'>⚠️ Please paste a valid HTML table.</p>";
-      }
-    }
-  </script>
+			textarea {
+				width: 100%;
+				height: 180px;
+				padding: 15px;
+				border: 2px solid #e1e5e9;
+				border-radius: 12px;
+				font-family: "Consolas", "Monaco", "Courier New", monospace;
+				font-size: 14px;
+				line-height: 1.5;
+				resize: vertical;
+				transition: all 0.3s ease;
+				background: #fafbfc;
+			}
 
-</body>
+			textarea:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+				background: #fff;
+			}
+
+			.controls {
+				display: flex;
+				gap: 15px;
+				flex-wrap: wrap;
+				align-items: center;
+				margin-top: 15px;
+			}
+
+			button {
+				padding: 12px 24px;
+				border: none;
+				border-radius: 8px;
+				font-weight: 600;
+				font-size: 14px;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			.btn-primary {
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				color: white;
+				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+			}
+
+			.btn-primary:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+			}
+
+			.btn-secondary {
+				background: #f8f9fa;
+				color: #495057;
+				border: 2px solid #e9ecef;
+			}
+
+			.btn-secondary:hover {
+				background: #e9ecef;
+				transform: translateY(-1px);
+			}
+
+			.style-controls {
+				display: flex;
+				gap: 15px;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+
+			select {
+				padding: 8px 12px;
+				border: 2px solid #e1e5e9;
+				border-radius: 6px;
+				background: white;
+				font-size: 14px;
+				cursor: pointer;
+			}
+
+			.table-container {
+				margin-top: 30px;
+				border-radius: 12px;
+				overflow: hidden;
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+				background: white;
+			}
+
+			.table-wrapper {
+				overflow-x: auto;
+				max-height: 600px;
+				overflow-y: auto;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 14px;
+			}
+
+			/* Default table style */
+			.style-default th {
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				color: white;
+				font-weight: 600;
+				padding: 12px 15px;
+				text-align: left;
+				border: none;
+			}
+
+			.style-default td {
+				padding: 12px 15px;
+				border-bottom: 1px solid #e9ecef;
+				transition: background-color 0.2s ease;
+			}
+
+			.style-default tr:nth-child(even) td {
+				background-color: #f8f9fa;
+			}
+
+			.style-default tr:hover td {
+				background-color: #e3f2fd;
+			}
+
+			/* Minimal table style */
+			.style-minimal th {
+				background: #f8f9fa;
+				color: #333;
+				font-weight: 600;
+				padding: 10px 15px;
+				text-align: left;
+				border-bottom: 2px solid #dee2e6;
+			}
+
+			.style-minimal td {
+				padding: 10px 15px;
+				border: none;
+				border-bottom: 1px solid #f1f3f4;
+			}
+
+			.style-minimal tr:hover td {
+				background-color: #f8f9fa;
+			}
+
+			/* Dark table style */
+			.style-dark {
+				background: #2d3748;
+				color: white;
+			}
+
+			.style-dark th {
+				background: #1a202c;
+				color: #e2e8f0;
+				font-weight: 600;
+				padding: 12px 15px;
+				text-align: left;
+				border-bottom: 2px solid #4a5568;
+			}
+
+			.style-dark td {
+				padding: 12px 15px;
+				border-bottom: 1px solid #4a5568;
+			}
+
+			.style-dark tr:nth-child(even) td {
+				background-color: #374151;
+			}
+
+			.style-dark tr:hover td {
+				background-color: #4a5568;
+			}
+
+			.error-message {
+				background: #fee;
+				color: #c53030;
+				padding: 15px;
+				border-radius: 8px;
+				border-left: 4px solid #f56565;
+				margin-top: 15px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.success-message {
+				background: #f0fff4;
+				color: #22543d;
+				padding: 15px;
+				border-radius: 8px;
+				border-left: 4px solid #48bb78;
+				margin-top: 15px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.stats {
+				display: flex;
+				gap: 20px;
+				margin-top: 15px;
+				flex-wrap: wrap;
+			}
+
+			.stat-item {
+				background: #f8f9fa;
+				padding: 10px 15px;
+				border-radius: 8px;
+				font-size: 14px;
+				color: #495057;
+				font-weight: 500;
+			}
+
+			.hidden {
+				display: none;
+			}
+
+			@media (max-width: 768px) {
+				.container {
+					padding: 20px;
+				}
+
+				h1 {
+					font-size: 2em;
+				}
+
+				.controls {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				button {
+					justify-content: center;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>✨ Dynamic Table Renderer</h1>
+
+			<div class="input-section">
+				<label class="input-label" for="tableInput"> 📋 Paste your HTML table code: </label>
+				<textarea
+					id="tableInput"
+					placeholder="Paste your HTML table here...&#10;&#10;Example:&#10;<table>&#10;  <tr>&#10;    <th>Name</th>&#10;    <th>Age</th>&#10;  </tr>&#10;  <tr>&#10;    <td>John</td>&#10;    <td>30</td>&#10;  </tr>&#10;</table>"
+				></textarea>
+
+				<div class="controls">
+					<button class="btn-primary" onclick="renderTable()">🚀 Render Table</button>
+
+					<button class="btn-secondary" onclick="clearInput()">🗑️ Clear</button>
+
+					<button class="btn-secondary" onclick="copyTable()">📋 Copy HTML</button>
+
+					<div class="style-controls">
+						<label for="tableStyle">Style:</label>
+						<select id="tableStyle" onchange="applyStyle()">
+							<option value="default">Modern</option>
+							<option value="minimal">Minimal</option>
+							<option value="dark">Dark</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div id="messageContainer"></div>
+
+			<div class="table-container hidden" id="tableContainer">
+				<div class="table-wrapper" id="tableOutput"></div>
+				<div class="stats" id="statsContainer"></div>
+			</div>
+		</div>
+
+		<script>
+			let currentTableHTML = "";
+
+			function renderTable() {
+				const input = document.getElementById("tableInput").value.trim();
+				const output = document.getElementById("tableOutput");
+				const container = document.getElementById("tableContainer");
+				const messageContainer = document.getElementById("messageContainer");
+
+				// Clear previous messages
+				messageContainer.innerHTML = "";
+
+				if (!input) {
+					showMessage("Please paste some HTML table code first.", "error");
+					container.classList.add("hidden");
+					return;
+				}
+
+				try {
+					// Enhanced validation
+					if (!isValidTableHTML(input)) {
+						showMessage(
+							"⚠️ Please paste valid HTML table code. Make sure it contains &lt;table&gt;, &lt;tr&gt;, and &lt;td&gt;/&lt;th&gt; tags.",
+							"error"
+						);
+						container.classList.remove("hidden");
+						output.innerHTML =
+							'<p style="padding: 20px; text-align: center; color: #666;">No valid table to display</p>';
+						return;
+					}
+
+					// Sanitize and render
+					const sanitizedHTML = sanitizeHTML(input);
+					output.innerHTML = sanitizedHTML;
+					currentTableHTML = sanitizedHTML;
+
+					// Apply current style
+					applyStyle();
+
+					// Show success message and stats
+					container.classList.remove("hidden");
+					showMessage("✅ Table rendered successfully!", "success");
+					updateStats(output);
+				} catch (error) {
+					showMessage("❌ Error rendering table: " + error.message, "error");
+					container.classList.remove("hidden");
+					output.innerHTML =
+						'<p style="padding: 20px; text-align: center; color: #666;">Error displaying table</p>';
+				}
+			}
+
+			function isValidTableHTML(html) {
+				const lowercaseHTML = html.toLowerCase();
+				return (
+					lowercaseHTML.includes("<table") &&
+					(lowercaseHTML.includes("<td") || lowercaseHTML.includes("<th")) &&
+					lowercaseHTML.includes("<tr")
+				);
+			}
+
+			function sanitizeHTML(html) {
+				// Create a temporary div to parse HTML safely
+				const tempDiv = document.createElement("div");
+				tempDiv.innerHTML = html;
+
+				// Only allow table-related elements
+				const allowedTags = [
+					"table",
+					"thead",
+					"tbody",
+					"tfoot",
+					"tr",
+					"th",
+					"td",
+					"caption",
+					"colgroup",
+					"col",
+				];
+				const tables = tempDiv.querySelectorAll("*");
+
+				tables.forEach((element) => {
+					if (!allowedTags.includes(element.tagName.toLowerCase())) {
+						element.remove();
+					}
+				});
+
+				return tempDiv.innerHTML;
+			}
+
+			function applyStyle() {
+				const style = document.getElementById("tableStyle").value;
+				const output = document.getElementById("tableOutput");
+				const tables = output.querySelectorAll("table");
+
+				tables.forEach((table) => {
+					// Remove existing style classes
+					table.className = table.className.replace(/style-\w+/g, "").trim();
+					// Add new style class
+					table.classList.add("style-" + style);
+				});
+			}
+
+			function clearInput() {
+				document.getElementById("tableInput").value = "";
+				document.getElementById("tableContainer").classList.add("hidden");
+				document.getElementById("messageContainer").innerHTML = "";
+				currentTableHTML = "";
+			}
+
+			function copyTable() {
+				if (!currentTableHTML) {
+					showMessage("No table to copy. Please render a table first.", "error");
+					return;
+				}
+
+				navigator.clipboard
+					.writeText(currentTableHTML)
+					.then(() => {
+						showMessage("📋 Table HTML copied to clipboard!", "success");
+					})
+					.catch(() => {
+						// Fallback for older browsers
+						const textArea = document.createElement("textarea");
+						textArea.value = currentTableHTML;
+						document.body.appendChild(textArea);
+						textArea.select();
+						document.execCommand("copy");
+						document.body.removeChild(textArea);
+						showMessage("📋 Table HTML copied to clipboard!", "success");
+					});
+			}
+
+			function showMessage(text, type) {
+				const messageContainer = document.getElementById("messageContainer");
+				const messageClass = type === "error" ? "error-message" : "success-message";
+				const icon = type === "error" ? "⚠️" : "✅";
+
+				messageContainer.innerHTML = `
+        <div class="${messageClass}">
+          <span>${icon}</span>
+          <span>${text}</span>
+        </div>
+      `;
+
+				// Auto-hide success messages after 3 seconds
+				if (type === "success") {
+					setTimeout(() => {
+						messageContainer.innerHTML = "";
+					}, 3000);
+				}
+			}
+
+			function updateStats(output) {
+				const tables = output.querySelectorAll("table");
+				const statsContainer = document.getElementById("statsContainer");
+
+				if (tables.length === 0) {
+					statsContainer.innerHTML = "";
+					return;
+				}
+
+				let totalRows = 0;
+				let totalCells = 0;
+
+				tables.forEach((table) => {
+					const rows = table.querySelectorAll("tr");
+					const cells = table.querySelectorAll("td, th");
+					totalRows += rows.length;
+					totalCells += cells.length;
+				});
+
+				statsContainer.innerHTML = `
+        <div class="stat-item">📊 ${tables.length} Table${tables.length !== 1 ? "s" : ""}</div>
+        <div class="stat-item">📝 ${totalRows} Row${totalRows !== 1 ? "s" : ""}</div>
+        <div class="stat-item">🔢 ${totalCells} Cell${totalCells !== 1 ? "s" : ""}</div>
+      `;
+			}
+
+			// Auto-resize textarea
+			document.getElementById("tableInput").addEventListener("input", function () {
+				this.style.height = "auto";
+				this.style.height = Math.max(180, this.scrollHeight) + "px";
+			});
+
+			// Keyboard shortcuts
+			document.addEventListener("keydown", function (e) {
+				if (e.ctrlKey || e.metaKey) {
+					switch (e.key) {
+						case "Enter":
+							e.preventDefault();
+							renderTable();
+							break;
+						case "k":
+							e.preventDefault();
+							clearInput();
+							break;
+					}
+				}
+			});
+		</script>
+	</body>
 </html>
