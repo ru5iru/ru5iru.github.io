@@ -436,6 +436,11 @@
     .modal-body { padding: 12px 14px; display: grid; gap: 10px; }
     .modal-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 
+    .cell-search .input { flex: 1 1 220px; min-width: 0; width: 100%; }
+    .cell-search .btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+    .cell-search-match { background: color-mix(in srgb, var(--warning) 25%, var(--panel)); color: var(--text); }
+    .cell-search-match.active { background: var(--accent-soft); outline: 2px solid var(--accent); outline-offset: -2px; }
+
     pre {
       margin: 0;
       max-height: 520px;
@@ -564,8 +569,14 @@
       </div>
     </div>
     <div class="modal-body">
-      <div id="cellNavigationHint">Use arrow keys to move between cells. Press Escape to close.</div>
+      <div id="cellNavigationHint">Use arrow keys outside the search field to move between cells. Press Escape to close.</div>
       <div class="modal-meta" id="cellMeta"></div>
+      <div class="button-row cell-search" role="search" aria-label="Search cell contents">
+        <input class="input" id="cellSearchInput" type="search" placeholder="Search within cell..." aria-label="Search within cell" autocomplete="off" />
+        <button class="btn" id="prevCellMatchBtn" type="button" disabled>Previous match</button>
+        <button class="btn" id="nextCellMatchBtn" type="button" disabled>Next match</button>
+        <span class="pill" id="cellMatchCount" role="status" aria-live="polite" aria-atomic="true">0 matches</span>
+      </div>
       <pre id="cellContent"></pre>
     </div>
   </dialog>
@@ -595,6 +606,9 @@
       activeFind: -1,
       currentCellText: "",
       currentCell: null,
+      currentCellDisplayText: "",
+      cellSearchMatches: [],
+      activeCellMatch: -1,
       debounceTimers: Object.create(null),
       totalWidth: 0,
       actualBodyHeight: 0,
@@ -619,7 +633,8 @@
         "columnFiltersBtn", "columnsBtn", "wrapBtn", "copyBtn", "csvBtn", "tsvBtn",
         "tableSelect", "main", "columnsList", "columnSearch", "showAllColumnsBtn", "hideEmptyColumnsBtn",
         "message", "stats", "emptyState", "tableScroll", "gridCanvas", "gridHeader", "rowsLayer",
-        "cellDialog", "cellTitle", "cellMeta", "cellContent", "copyCellBtn", "closeCellBtn"
+        "cellDialog", "cellTitle", "cellMeta", "cellContent", "copyCellBtn", "closeCellBtn",
+        "cellSearchInput", "prevCellMatchBtn", "nextCellMatchBtn", "cellMatchCount"
       ].forEach(id => { els[id] = document.getElementById(id); });
     }
 
@@ -651,16 +666,27 @@
       els.closeCellBtn.addEventListener("click", () => els.cellDialog.close());
       els.cellDialog.addEventListener("keydown", handleCellNavigation);
       els.cellDialog.addEventListener("close", () => { state.currentCell = null; });
+      els.cellSearchInput.addEventListener("input", rebuildCellSearch);
+      els.cellSearchInput.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
+          event.preventDefault();
+          stepCellMatch(event.shiftKey ? -1 : 1);
+        }
+      });
+      els.prevCellMatchBtn.addEventListener("click", () => stepCellMatch(-1));
+      els.nextCellMatchBtn.addEventListener("click", () => stepCellMatch(1));
       window.addEventListener("resize", scheduleViewportRender);
 
       document.addEventListener("keydown", event => {
         if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
           event.preventDefault();
-          renderFromInput();
+          if (!els.cellDialog.open) renderFromInput();
         }
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
           event.preventDefault();
-          els.findInput.focus();
+          const input = els.cellDialog.open ? els.cellSearchInput : els.findInput;
+          input.focus();
+          input.select();
         }
         if (event.key === "Escape" && els.cellDialog.open) {
           els.cellDialog.close();
@@ -1070,6 +1096,7 @@
 
     function handleCellNavigation(event) {
       if (!els.cellDialog.open || !state.currentCell || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.target.closest("input, textarea, select, [contenteditable]")) return;
       const directions = {
         ArrowLeft: [0, -1],
         ArrowRight: [0, 1],
@@ -1095,6 +1122,8 @@
       const pretty = prettyPrint(raw);
       state.currentCell = { rowIndex, col };
       state.currentCellText = raw;
+      state.currentCellDisplayText = pretty.value;
+      if (!els.cellDialog.open) els.cellSearchInput.value = "";
       els.cellTitle.textContent = state.headers[col];
       els.cellMeta.innerHTML = "";
       [`Row: ${rowIndex + 1}`, `Column: ${col + 1}`, `Characters: ${raw.length.toLocaleString()}`, pretty.changed ? "JSON formatted" : "Plain text"].forEach(value => {
@@ -1103,10 +1132,51 @@
         pill.textContent = value;
         els.cellMeta.appendChild(pill);
       });
-      els.cellContent.textContent = pretty.value;
       els.cellContent.scrollTop = 0;
       els.cellContent.scrollLeft = 0;
       if (!els.cellDialog.open) els.cellDialog.showModal();
+      rebuildCellSearch();
+    }
+
+    function rebuildCellSearch() {
+      const text = state.currentCellDisplayText;
+      const query = els.cellSearchInput.value;
+      const fragment = document.createDocumentFragment();
+      state.cellSearchMatches = [];
+      state.activeCellMatch = -1;
+      let lastIndex = 0;
+
+      if (query) {
+        const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+        for (const match of text.matchAll(pattern)) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+          const mark = document.createElement("mark");
+          mark.className = "cell-search-match";
+          mark.textContent = match[0];
+          state.cellSearchMatches.push(mark);
+          fragment.appendChild(mark);
+          lastIndex = match.index + match[0].length;
+        }
+      }
+
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      els.cellContent.replaceChildren(fragment);
+      stepCellMatch(1);
+    }
+
+    function stepCellMatch(direction) {
+      const matches = state.cellSearchMatches;
+      const previous = matches[state.activeCellMatch];
+      if (previous) previous.classList.remove("active");
+      if (matches.length) {
+        state.activeCellMatch = (state.activeCellMatch + direction + matches.length) % matches.length;
+        const active = matches[state.activeCellMatch];
+        active.classList.add("active");
+        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+      els.cellMatchCount.textContent = matches.length ? `${state.activeCellMatch + 1} / ${matches.length}` : "0 matches";
+      els.prevCellMatchBtn.disabled = !matches.length;
+      els.nextCellMatchBtn.disabled = !matches.length;
     }
 
     function prettyPrint(value) {
