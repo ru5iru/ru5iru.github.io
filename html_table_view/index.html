@@ -555,7 +555,7 @@
     </main>
   </div>
 
-  <dialog id="cellDialog">
+  <dialog id="cellDialog" aria-labelledby="cellTitle" aria-describedby="cellNavigationHint">
     <div class="modal-head">
       <div class="modal-title" id="cellTitle">Cell details</div>
       <div class="button-row">
@@ -564,6 +564,7 @@
       </div>
     </div>
     <div class="modal-body">
+      <div id="cellNavigationHint">Use arrow keys to move between cells. Press Escape to close.</div>
       <div class="modal-meta" id="cellMeta"></div>
       <pre id="cellContent"></pre>
     </div>
@@ -593,6 +594,7 @@
       findMatches: [],
       activeFind: -1,
       currentCellText: "",
+      currentCell: null,
       debounceTimers: Object.create(null),
       totalWidth: 0,
       actualBodyHeight: 0,
@@ -647,6 +649,8 @@
       els.tableSelect.addEventListener("change", () => loadTable(Number(els.tableSelect.value)));
       els.copyCellBtn.addEventListener("click", copyCurrentCell);
       els.closeCellBtn.addEventListener("click", () => els.cellDialog.close());
+      els.cellDialog.addEventListener("keydown", handleCellNavigation);
+      els.cellDialog.addEventListener("close", () => { state.currentCell = null; });
       window.addEventListener("resize", scheduleViewportRender);
 
       document.addEventListener("keydown", event => {
@@ -1061,8 +1065,35 @@
       if (!cell) return;
       const rowIndex = Number(cell.dataset.row);
       const col = Number(cell.dataset.col);
+      showCellDetails(rowIndex, col);
+    }
+
+    function handleCellNavigation(event) {
+      if (!els.cellDialog.open || !state.currentCell || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const directions = {
+        ArrowLeft: [0, -1],
+        ArrowRight: [0, 1],
+        ArrowUp: [-1, 0],
+        ArrowDown: [1, 0]
+      };
+      const direction = directions[event.key];
+      if (!direction) return;
+      event.preventDefault();
+
+      const cols = visibleColumns();
+      const rowPos = state.filteredIndexes.indexOf(state.currentCell.rowIndex);
+      const colPos = cols.indexOf(state.currentCell.col);
+      if (rowPos < 0 || colPos < 0) return;
+      const nextRowPos = rowPos + direction[0];
+      const nextColPos = colPos + direction[1];
+      if (nextRowPos < 0 || nextRowPos >= state.filteredIndexes.length || nextColPos < 0 || nextColPos >= cols.length) return;
+      showCellDetails(state.filteredIndexes[nextRowPos], cols[nextColPos]);
+    }
+
+    function showCellDetails(rowIndex, col) {
       const raw = String(state.rows[rowIndex][col] ?? "");
       const pretty = prettyPrint(raw);
+      state.currentCell = { rowIndex, col };
       state.currentCellText = raw;
       els.cellTitle.textContent = state.headers[col];
       els.cellMeta.innerHTML = "";
@@ -1073,7 +1104,9 @@
         els.cellMeta.appendChild(pill);
       });
       els.cellContent.textContent = pretty.value;
-      els.cellDialog.showModal();
+      els.cellContent.scrollTop = 0;
+      els.cellContent.scrollLeft = 0;
+      if (!els.cellDialog.open) els.cellDialog.showModal();
     }
 
     function prettyPrint(value) {
